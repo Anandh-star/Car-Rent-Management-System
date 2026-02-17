@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>User Dashboard</title>
+<style>
+body { font-family:'Poppins',sans-serif; margin:0; padding:20px; color:white; overflow-x:hidden;
+background: linear-gradient(120deg,#0a0a0a,#1b1b1b,#2e2e2e); background-size:400% 400%; animation:gradientMove 12s ease infinite; }
+@keyframes gradientMove { 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
+
+h2{text-align:center;color:#FFD700;margin-bottom:20px;text-shadow:0 0 10px #FFD700,0 0 20px #ffaa00;letter-spacing:1px;}
+table{width:90%;margin:20px auto;border-collapse:collapse;background:rgba(255,255,255,0.08);border-radius:14px;overflow:hidden;box-shadow:0 5px 25px rgba(0,0,0,0.6);backdrop-filter:blur(10px);}
+th,td{border:1px solid rgba(255,255,255,0.1);padding:14px;text-align:center;color:white;}
+th{background:rgba(255,215,0,0.9);color:#111;font-weight:bold;}
+tr:hover{background:rgba(255,255,255,0.1);transition:0.3s;}
+.btn{padding:8px 14px;border:none;border-radius:8px;cursor:pointer;font-weight:600;transition:0.3s;background:linear-gradient(90deg,#FFD700,#ffb700);color:#111;box-shadow:0 0 10px rgba(255,215,0,0.6);}
+.btn:hover{background:linear-gradient(90deg,#ffb700,#FFD700);transform:translateY(-2px);box-shadow:0 0 15px rgba(255,215,0,0.8);}
+.cancel-btn{background:linear-gradient(90deg,#e74c3c,#ff6b6b);color:white;box-shadow:0 0 10px rgba(231,76,60,0.6);}
+.cancel-btn:hover{background:linear-gradient(90deg,#ff6b6b,#e74c3c);}
+.logout-btn{background:linear-gradient(90deg,#e74c3c,#ff7675);color:white;display:block;margin:10px auto;box-shadow:0 0 10px rgba(255,0,0,0.6);}
+.logout-btn:hover{background:linear-gradient(90deg,#ff7675,#e74c3c);}
+
+#billModal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);justify-content:center;align-items:center;}
+#billContent{background:rgba(255,255,255,0.95);color:#111;padding:25px;border-radius:15px;width:350px;text-align:center;box-shadow:0 5px 20px rgba(255,215,0,0.4);}
+#billContent h3{color:#FFD700;margin-bottom:10px;text-shadow:0 0 6px #FFD700;}
+#qrCanvas{margin:10px auto; display:block;}
+@media(max-width:768px){table{width:100%;}#billContent{width:90%;}}
+
+/* Notifications */
+#notification {
+  position: fixed; top:20px; right:20px; min-width:200px; padding:15px 20px;
+  background: linear-gradient(90deg,#ffd700,#ffaa00); color:#111; font-weight:bold;
+  border-radius:10px; box-shadow:0 0 15px rgba(255,215,0,0.7);
+  opacity:0; pointer-events:none; transition:0.5s;
+  z-index:1000; text-align:center;
+}
+</style>
+</head>
+<body>
+
+<h2>🚗 Welcome <span id="username"></span></h2>
+<button class="btn logout-btn" onclick="logout()">Logout</button>
+
+<h2>Book Your Ride</h2>
+<form action="view cars.html" method="POST" style="text-align:center; margin:20px 0;">
+  <button type="submit" class="btn">🚘 View Cars</button>
+</form>
+
+<div style="text-align:center;margin-bottom:20px;">
+<label>Start Date: <input type="date" id="startDate"></label>
+<label>End Date: <input type="date" id="endDate"></label>
+<label>Choose Car: <select id="carSelect"></select></label>
+<label>Need Driver? <input type="checkbox" id="needDriver"></label>
+<button class="btn" onclick="confirmBooking()">Confirm Booking</button>
+</div>
+
+<h2>Your Bookings</h2>
+<table id="bookingTable">
+<tr><th>Booking ID</th><th>Car</th><th>Days</th><th>Total</th><th>Status</th><th>Action</th></tr>
+</table>
+
+<h2>Your Booking History</h2>
+<table id="historyTable">
+<tr><th>Booking ID</th><th>Car</th><th>Days</th><th>Total</th><th>Status</th></tr>
+</table>
+
+<div id="billModal">
+<div id="billContent">
+<h3>Booking Bill</h3>
+<p><b>Name:</b> <span id="billName"></span></p>
+<p><b>Car:</b> <span id="billCar"></span></p>
+<p><b>Days:</b> <span id="billDays"></span></p>
+<p><b>Car Rate:</b> ₹<span id="billRate"></span>/day</p>
+<p><b>Driver:</b> ₹<span id="billDriver"></span>/day</p>
+<p><b>Total:</b> ₹<span id="billTotal"></span></p>
+<p><b>Scan to Pay:</b></p>
+<div id="qrCanvas"></div>
+<br><br>
+<button class="btn" onclick="closeBill()">Close</button>
+</div>
+</div>
+
+<div id="notification"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+let DRIVER_CHARGE = 500;
+let user = JSON.parse(localStorage.getItem("loggedInUser"));
+if(!user){alert("Please login!"); window.location.href="home.html";}
+document.getElementById("username").innerText = user.username;
+
+let cars = JSON.parse(localStorage.getItem("cars")) || [
+  {name:"Swift", model:"2022", price:1000, booked:false},
+  {name:"Innova", model:"2023", price:2000, booked:false},
+  {name:"BMW", model:"2024", price:5000, booked:false}
+];
+
+// Notification function
+function showNotification(msg){
+  let n = document.getElementById("notification");
+  n.innerText = msg;
+  n.style.opacity = "1";
+  setTimeout(()=>{ n.style.opacity="0"; }, 2500);
+}
+
+function loadCarSelect(){
+  let select=document.getElementById("carSelect");
+  select.innerHTML="";
+  let available=cars.filter(c=>!c.booked);
+  if(available.length===0){
+    let opt=document.createElement("option");
+    opt.text="No cars available 😅";
+    opt.disabled=true;
+    select.appendChild(opt);
+  } else {
+    available.forEach(c=>{
+      let opt=document.createElement("option");
+      opt.value=cars.indexOf(c);
+      opt.text=c.name+" - ₹"+c.price+"/day";
+      select.appendChild(opt);
+    });
+  }
+}
+
+function confirmBooking(){
+  let start=document.getElementById("startDate").value;
+  let end=document.getElementById("endDate").value;
+  let index=document.getElementById("carSelect").value;
+  let needDriver=document.getElementById("needDriver").checked;
+
+  if(!start || !end){alert("Please select start and end date"); return;}
+
+  let diff=Math.ceil((new Date(end)-new Date(start))/(1000*60*60*24));
+  if(diff<=0){alert("Invalid duration"); return;}
+
+  let car=cars[index];
+  if(car.booked){alert("Sorry! Already booked."); return;}
+
+  let total = (car.price * diff) + (needDriver ? DRIVER_CHARGE*diff : 0);
+
+  let bookings=JSON.parse(localStorage.getItem("bookings"))||[];
+  let bookingId="BK"+(bookings.length+1).toString().padStart(3,'0');
+  bookings.push({bookingId,customer:user.username,car:car.name,days:diff,total:total,status:"Confirmed"});
+  localStorage.setItem("bookings",JSON.stringify(bookings));
+
+  cars[index].booked=true;
+  localStorage.setItem("cars",JSON.stringify(cars));
+
+  // Bill Modal
+  document.getElementById("billName").innerText=user.username;
+  document.getElementById("billCar").innerText=car.name;
+  document.getElementById("billDays").innerText=diff;
+  document.getElementById("billRate").innerText=car.price;
+  document.getElementById("billDriver").innerText=needDriver?DRIVER_CHARGE:0;
+  document.getElementById("billTotal").innerText=total;
+
+  document.getElementById("qrCanvas").innerHTML="";
+  new QRCode(document.getElementById("qrCanvas"), {
+    text: `upi://pay?pa=rajianandh1208-2@okhdfcbank&pn=CarRental&am=${total}&cu=INR`,
+    width:200, height:200,
+    colorDark:"#000000", colorLight:"#ffffff",
+    correctLevel: QRCode.CorrectLevel.H
+  });
+
+  document.getElementById("billModal").style.display="flex";
+  showNotification("Booking Confirmed ✅");
+  loadCarSelect(); loadBookings(); loadHistory();
+}
+
+function closeBill(){document.getElementById("billModal").style.display="none";}
+
+function loadBookings(){
+  let table=document.getElementById("bookingTable");
+  let bookings=JSON.parse(localStorage.getItem("bookings"))||[];
+  table.innerHTML='<tr><th>Booking ID</th><th>Car</th><th>Days</th><th>Total</th><th>Status</th><th>Action</th></tr>';
+  bookings.filter(b=>b.customer===user.username).forEach(b=>{
+    let row=table.insertRow();
+    row.insertCell(0).innerText=b.bookingId;
+    row.insertCell(1).innerText=b.car;
+    row.insertCell(2).innerText=b.days;
+    row.insertCell(3).innerText="₹"+b.total;
+    row.insertCell(4).innerText=b.status;
+    row.insertCell(5).innerHTML=b.status==="Confirmed"?`<button class="btn cancel-btn" onclick="cancelBooking('${b.bookingId}','${b.car}')">Cancel</button>`:"";
+  });
+}
+
+function loadHistory(){
+  let table=document.getElementById("historyTable");
+  let bookings=JSON.parse(localStorage.getItem("bookings"))||[];
+  table.innerHTML='<tr><th>Booking ID</th><th>Car</th><th>Days</th><th>Total</th><th>Status</th></tr>';
+  bookings.filter(b=>b.customer===user.username).forEach(b=>{
+    let row=table.insertRow();
+    row.insertCell(0).innerText=b.bookingId;
+    row.insertCell(1).innerText=b.car;
+    row.insertCell(2).innerText=b.days;
+    row.insertCell(3).innerText="₹"+b.total;
+    row.insertCell(4).innerText=b.status;
+  });
+}
+
+function cancelBooking(id,carName){
+  if(confirm("Cancel this booking?")){
+    let bookings=JSON.parse(localStorage.getItem("bookings"))||[];
+    bookings=bookings.map(b=>{if(b.bookingId===id)b.status="Cancelled"; return b;});
+    localStorage.setItem("bookings",JSON.stringify(bookings));
+
+    let carIndex=cars.findIndex(c=>c.name===carName);
+    if(carIndex>=0) cars[carIndex].booked=false;
+    localStorage.setItem("cars",JSON.stringify(cars));
+
+    showNotification("Booking Cancelled ❌");
+    loadCarSelect(); loadBookings(); loadHistory();
+  }
+}
+
+function logout(){
+  localStorage.removeItem("loggedInUser");
+  showNotification("Logged Out 👋");
+  setTimeout(()=>{window.location.href="home.html";}, 800);
+}
+
+window.onload=function(){loadCarSelect(); loadBookings(); loadHistory();}
+</script>
+</body>
+</html>

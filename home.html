@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title> CAR RENT SERVICE </title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: Arial, sans-serif;
+      background: url('https://images.unsplash.com/photo-1542362567-b07e54358753?auto=format&fit=crop&w=1470&q=80') no-repeat center center/cover;
+      height: 100vh;
+      color: white;
+    }
+    nav {
+      width: 100%;
+      background: rgba(0,0,0,0.6);
+      padding: 15px 50px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 100;
+    }
+    nav .logo { font-size: 45px; font-weight: bold; color: #FFD700; }
+    nav ul { list-style: none; display: flex; }
+    nav ul li { margin-left: 40px; }
+    nav ul li a {
+      text-decoration: none; color: white; font-size: 25px; transition: 0.3s;
+    }
+    nav ul li a:hover { color: #FFD700; }
+    .hero {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      background: rgba(0,0,0,0.6);
+    }
+    .hero h1 { font-size: 54px; font-weight: bold; margin-bottom: 20px; color: #FFD700; text-shadow: 0 0 15px #00ffff; }
+    .hero p { font-size: 30px; margin-bottom: 30px; text-shadow: 0 0 10px black; }
+    .btn {
+      padding: 15px 30px;
+      font-size: 20px;
+      background: linear-gradient(45deg, #FFD700, #00ffff);
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: 0.3s;
+      color: black;
+      font-weight: bold;
+      margin: 10px;
+      box-shadow: 0 0 15px #00ffff, 0 0 25px #FFD700;
+    }
+    .btn:hover { background: linear-gradient(45deg, #ffcc00, #1e90ff); transform: scale(1.07); }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="logo">   CAR  RENT </div>
+    <ul>
+      <li><a href="#">Home</a></li>
+      <li><a href="#">Cars</a></li>
+      <li><a href="#">Booking</a></li>
+      <li><a href="#">Contact</a></li>
+    </ul>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <h1>Welcome to CarRent</h1>
+    <p>Book your dream car anytime, anywhere with ease</p>
+    <div>
+      <button class="btn" onclick="location.href='admin login.html'">Admin Module</button>
+      <button class="btn" onclick="location.href='user login.html'">User Module</button>
+    </div>
+  </section>
+
+</body>
+</html>
