@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Monthly Billing Report - CarRent</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap');
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: #111;
+  color: white;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 60px auto;
+  padding: 35px;
+  background: rgba(20, 20, 20, 0.95);
+  border-radius: 25px;
+  box-shadow: 0 0 40px rgba(255, 215, 0, 0.4);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+}
+
+h2 {
+  text-align: center;
+  color: #FFD700;
+  font-size: 36px;
+  font-weight: 600;
+  text-shadow: 0 0 15px #FFD700, 0 0 25px #FFA500;
+}
+
+/* Month filter */
+.filter-box {
+  text-align: center;
+  margin-bottom: 20px;
+}
+select {
+  background: #FFD700;
+  color: #111;
+  font-size: 16px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+select:hover {
+  background: #FFA500;
+}
+
+/* Table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(30, 30, 30, 0.9);
+  margin-top: 15px;
+  border-radius: 15px;
+  overflow: hidden;
+}
+th, td {
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  padding: 12px 10px;
+  text-align: center;
+}
+th {
+  background: linear-gradient(90deg, #FFD700, #FFB300);
+  color: #111;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+.total-row td {
+  font-weight: bold;
+  color: #FFD700;
+  font-size: 18px;
+  border-top: 2px solid #FFD700;
+}
+
+/* Summary */
+.summary-box {
+  margin-top: 40px;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid #FFD700;
+  border-radius: 15px;
+  text-align: center;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+}
+.summary-box h3 {
+  color: #FFD700;
+  text-shadow: 0 0 15px #FFD700;
+}
+.summary-box p {
+  font-size: 18px;
+  margin: 8px 0;
+}
+
+/* Button */
+button {
+  background: #FFD700;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  color: #111;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+button:hover {
+  background: #FFA500;
+  transform: scale(1.05);
+}
+
+/* Chart */
+.chart-container {
+  margin-top: 40px;
+  background: rgba(0, 0, 0, 0.85);
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
+}
+
+footer {
+  text-align: center;
+  margin: 40px 0;
+  color: #FFD700;
+  font-size: 14px;
+  text-shadow: 0 0 10px #FFD700;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Monthly Billing & Revenue Report</h2>
+
+  <div class="filter-box">
+    <label for="monthSelect">Select Month: </label>
+    <select id="monthSelect" onchange="loadBilling()">
+      <option value="All">All</option>
+      <option value="January">January</option>
+      <option value="February">February</option>
+      <option value="March">March</option>
+      <option value="April">April</option>
+      <option value="May">May</option>
+      <option value="June">June</option>
+      <option value="July">July</option>
+      <option value="August">August</option>
+      <option value="September">September</option>
+      <option value="October">October</option>
+      <option value="November">November</option>
+      <option value="December">December</option>
+    </select>
+  </div>
+
+  <table id="billingTable">
+    <tr>
+      <th>Booking ID</th>
+      <th>Customer</th>
+      <th>Car</th>
+      <th>Days</th>
+      <th>Total</th>
+      <th>Status</th>
+      <th>Month</th>
+    </tr>
+  </table>
+
+  <div class="summary-box">
+    <h3>📊 Monthly Summary</h3>
+    <p id="totalRevenue">Total Revenue: ₹0</p>
+    <p id="totalLoss">Cancel Loss: ₹0</p>
+    <p id="profit">Net Profit: ₹0</p>
+    <button onclick="validateReport()">✅ Validate Report</button>
+  </div>
+
+  <div class="chart-container">
+    <canvas id="revenueChart" width="600" height="300"></canvas>
+  </div>
+</div>
+
+<footer>© 2025 CarRent | Admin Dashboard 😎</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+function loadBilling() {
+  const table = document.getElementById("billingTable");
+  const selectedMonth = document.getElementById("monthSelect").value;
+  const bookings = JSON.parse(localStorage.getItem("bookings")) || [];
+
+  table.innerHTML = `
+    <tr>
+      <th>Booking ID</th>
+      <th>Customer</th>
+      <th>Car</th>
+      <th>Days</th>
+      <th>Total</th>
+      <th>Status</th>
+      <th>Month</th>
+    </tr>`;
+
+  let totalRevenue = 0;
+  let totalLoss = 0;
+
+  bookings.forEach(b => {
+    if (selectedMonth === "All" || b.month === selectedMonth) {
+      const row = table.insertRow();
+      row.insertCell(0).innerText = b.bookingId;
+      row.insertCell(1).innerText = b.customer;
+      row.insertCell(2).innerText = b.car;
+      row.insertCell(3).innerText = b.days;
+      row.insertCell(4).innerText = "₹" + b.total.toLocaleString();
+      row.insertCell(5).innerText = b.status;
+      row.insertCell(6).innerText = b.month;
+
+      if (b.status === "Confirmed") totalRevenue += b.total;
+      if (b.status === "Cancelled") totalLoss += b.total * 0.5;
+    }
+  });
+
+  const profit = totalRevenue - totalLoss;
+
+  document.getElementById("totalRevenue").innerText = "Total Revenue: ₹" + totalRevenue.toLocaleString();
+  document.getElementById("totalLoss").innerText = "Cancel Loss: ₹" + totalLoss.toLocaleString();
+  document.getElementById("profit").innerText = "Net Profit: ₹" + profit.toLocaleString();
+
+  generateChart(totalRevenue, totalLoss, profit);
+}
+
+function generateChart(revenue, loss, profit) {
+  const ctx = document.getElementById('revenueChart').getContext('2d');
+  if (window.myChart) window.myChart.destroy();
+  window.myChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Revenue', 'Loss', 'Profit'],
+      datasets: [{
+        label: 'Monthly Performance (₹)',
+        data: [revenue, loss, profit],
+        backgroundColor: ['#FFD700', '#FF4500', '#32CD32'],
+        borderColor: ['#FFF200', '#FF6347', '#00FF7F'],
+        borderWidth: 2
+      }]
+    },
+    options: {
+      scales: {
+        y: { beginAtZero: true, ticks: { color: '#FFD700' } },
+        x: { ticks: { color: '#FFD700' } }
+      },
+      plugins: {
+        legend: { labels: { color: '#FFD700' } }
+      }
+    }
+  });
+}
+
+// Admin Validation
+function validateReport() {
+  const btn = event.target;
+  btn.innerText = "✅ Report Validated by Admin";
+  btn.style.background = "#00C851";
+  btn.style.color = "#fff";
+  btn.disabled = true;
+  alert("Admin validation successful! Report saved ✅");
+}
+
+window.onload = loadBilling;
+
+// Demo Data
+if (!localStorage.getItem("bookings")) {
+  const sample = [
+    { bookingId: "B001", customer: "Anandh", car: "Lamborghini", days: 3, total: 15000, status: "Confirmed", month: "October" },
+    { bookingId: "B002", customer: "Karthik", car: "BMW", days: 2, total: 8000, status: "Cancelled", month: "October" },
+    { bookingId: "B003", customer: "Vijay", car: "Audi", days: 5, total: 20000, status: "Confirmed", month: "September" },
+    { bookingId: "B004", customer: "Arun", car: "Ferrari", days: 4, total: 18000, status: "Confirmed", month: "August" },
+  ];
+  localStorage.setItem("bookings", JSON.stringify(sample));
+}
+</script>
+
+</body>
+</html>

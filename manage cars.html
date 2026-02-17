@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Manage Cars</title>
+<style>
+body {
+  font-family: Arial;
+  background: url('https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1470&q=80') no-repeat center center/cover;
+  margin:0; padding:20px; color:white;
+}
+h2 {text-align:center; color:#FFD700; margin-bottom:20px; text-shadow:2px 2px 5px black;}
+.form-container {
+  background: rgba(0,0,0,0.7); padding:20px; border-radius:12px; width:400px; margin:0 auto 30px auto; text-align:center;
+}
+input {padding:10px; margin:8px; border:none; border-radius:8px; width:90%;}
+button {padding:10px 20px; background:#FFD700; border:none; border-radius:12px; cursor:pointer; font-weight:bold; margin-top:10px;}
+button:hover{background:#ffcc00; transform:scale(1.05);}
+table {width:95%; margin:0 auto; border-collapse:collapse; background:rgba(0,0,0,0.5); border-radius:12px; overflow:hidden; box-shadow:0 4px 10px rgba(0,0,0,0.5);}
+th, td {border:1px solid #ddd; padding:12px; text-align:center; color:white;}
+th {background:rgba(255,215,0,0.9); color:black;}
+tr:hover{background:rgba(255,255,255,0.1);}
+img {width:100px; border-radius:8px;}
+.delete-btn{padding:6px 12px; background:#e74c3c; border:none; border-radius:8px; color:white; cursor:pointer;}
+.delete-btn:hover{background:#c0392b;}
+</style>
+</head>
+<body>
+
+<h2>Admin – Manage Cars</h2>
+
+<div class="form-container">
+  <input type="text" id="carName" placeholder="Car Name">
+  <input type="text" id="carModel" placeholder="Model">
+  <input type="text" id="carPrice" placeholder="Price/Day">
+  <input type="text" id="vehicleNo" placeholder="Vehicle No (optional)">
+  <input type="file" id="carImage" accept="image/jpeg">
+  <button onclick="addCar()">Add Car</button>
+</div>
+
+<table id="carTable">
+<tr><th>Image</th><th>Car Name</th><th>Model</th><th>Price</th><th>Vehicle No</th><th>Action</th></tr>
+</table>
+
+<script>
+// Load cars
+let cars = JSON.parse(localStorage.getItem("cars")) || [];
+
+// Function to generate a random vehicle number (e.g., TN-58-2345)
+function generateVehicleNo(){
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const randomLetter = letters[Math.floor(Math.random()*letters.length)];
+  const randomLetter2 = letters[Math.floor(Math.random()*letters.length)];
+  const stateCode = "TN";
+  const district = Math.floor(Math.random()*99).toString().padStart(2,'0');
+  const number = Math.floor(Math.random()*9999).toString().padStart(4,'0');
+  return `${stateCode}-${district}-${randomLetter}${randomLetter2}-${number}`;
+}
+
+// Assign missing vehicle numbers automatically
+cars.forEach(car => {
+  if(!car.vehicleNo){
+    car.vehicleNo = generateVehicleNo();
+  }
+});
+localStorage.setItem("cars", JSON.stringify(cars));
+
+// Load cars into table
+function loadCars(){
+  let table = document.getElementById("carTable");
+  table.innerHTML='<tr><th>Image</th><th>Car Name</th><th>Model</th><th>Price</th><th>Vehicle No</th><th>Action</th></tr>';
+  cars.forEach((c,i)=>{
+    let row = table.insertRow();
+    row.insertCell(0).innerHTML = `<img src="${c.image}" alt="Car Image">`;
+    row.insertCell(1).innerText = c.name;
+    row.insertCell(2).innerText = c.model;
+    row.insertCell(3).innerText = "₹"+c.price;
+    row.insertCell(4).innerText = c.vehicleNo;
+    row.insertCell(5).innerHTML=`<button class="delete-btn" onclick="deleteCar(${i})">Delete</button>`;
+  });
+}
+
+// Add new car
+function addCar(){
+  let name = document.getElementById("carName").value.trim();
+  let model = document.getElementById("carModel").value.trim();
+  let price = document.getElementById("carPrice").value.trim();
+  let vNo = document.getElementById("vehicleNo").value.trim();
+  let file = document.getElementById("carImage").files[0];
+
+  if(name===""||model===""||price===""||!file){ 
+    alert("Fill all fields and select image!"); 
+    return; 
+  }
+
+  // Check JPG format
+  if(file.type !== "image/jpeg"){
+    alert("Only JPG images allowed!");
+    return;
+  }
+
+  // Generate random if not provided
+  if(vNo === "") vNo = generateVehicleNo();
+
+  let reader = new FileReader();
+  reader.onload = function(e){
+    cars.push({name, model, price: parseInt(price), image: e.target.result, vehicleNo: vNo});
+    localStorage.setItem("cars", JSON.stringify(cars));
+    document.getElementById("carName").value="";
+    document.getElementById("carModel").value="";
+    document.getElementById("carPrice").value="";
+    document.getElementById("vehicleNo").value="";
+    document.getElementById("carImage").value="";
+    loadCars();
+    alert("Car added successfully!");
+  }
+  reader.readAsDataURL(file);
+}
+
+// Delete car
+function deleteCar(index){
+  if(confirm("Are you sure to delete this car?")){
+    cars.splice(index,1);
+    localStorage.setItem("cars", JSON.stringify(cars));
+    loadCars();
+  }
+}
+
+// Initial load
+window.onload = loadCars;
+</script>
+
+</body>
+</html>

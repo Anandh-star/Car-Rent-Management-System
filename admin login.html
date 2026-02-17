@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Login - CarRent</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600&display=swap');
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: url('car2.jpeg') no-repeat center center/cover;
+      background-size: cover;
+      height: 100vh;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Dark transparent overlay */
+    body::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 0;
+    }
+
+    /* Glowing animated logo text */
+    .logo {
+      position: absolute;
+      top: 40px;
+      font-size: 42px;
+      color: #FFD700;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      font-weight: bold;
+      text-shadow: 0 0 20px #FFD700, 0 0 40px #FFB700, 0 0 60px #FFCC00;
+      animation: glow 2s infinite alternate;
+      z-index: 1;
+    }
+
+    @keyframes glow {
+      from { text-shadow: 0 0 15px #FFD700, 0 0 25px #FFB700, 0 0 40px #FFCC00; }
+      to { text-shadow: 0 0 30px #FFF200, 0 0 60px #FFD700, 0 0 80px #FFA500; }
+    }
+
+    .login-container {
+      position: relative;
+      z-index: 1;
+      background: rgba(0, 0, 0, 0.85);
+      padding: 40px;
+      border-radius: 20px;
+      text-align: center;
+      color: white;
+      width: 350px;
+      box-shadow: 0 0 25px rgba(255, 215, 0, 0.8);
+      border: 1px solid rgba(255, 215, 0, 0.6);
+      backdrop-filter: blur(10px);
+      transition: 0.3s;
+      margin-top: 100px;
+    }
+
+    .login-container:hover {
+      transform: scale(1.03);
+      box-shadow: 0 0 40px rgba(255, 215, 0, 0.9);
+    }
+
+    .login-container h2 {
+      color: #FFD700;
+      margin-bottom: 25px;
+      font-size: 28px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    input {
+      width: 90%;
+      padding: 12px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      outline: none;
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .btn {
+      width: 95%;
+      padding: 12px;
+      margin-top: 15px;
+      background: linear-gradient(90deg, #FFD700, #FFB700);
+      border: none;
+      border-radius: 30px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+      color: black;
+      font-size: 16px;
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+    }
+
+    .btn:hover {
+      background: linear-gradient(90deg, #FFCC00, #FFD700);
+      transform: scale(1.05);
+      box-shadow: 0 0 25px rgba(255, 215, 0, 0.9);
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Glowing animated logo -->
+  <div class="logo">CarRent</div>
+
+  <!-- Admin login box -->
+  <div class="login-container">
+    <h2>Admin Login</h2>
+    <input type="text" id="username" placeholder="Username"><br>
+    <input type="password" id="password" placeholder="Password"><br>
+    <button class="btn" onclick="login()">Login</button>
+  </div>
+
+  <script>
+    function login() {
+      let user = document.getElementById("username").value;
+      let pass = document.getElementById("password").value;
+
+      if(user === "admin" && pass === "1234") {
+        alert("Login Successful!");
+        window.location.href = "admin dashboard.html";
+      } else {
+        alert("Invalid Username or Password!");
+      }
+    }
+  </script>
+
+</body>
+</html>

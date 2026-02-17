@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manage Bookings</title>
+<style>
+body {
+  font-family: "Poppins", sans-serif;
+  background: url('https://images.unsplash.com/photo-1605559424843-9e4a7a35e8d4?auto=format&fit=crop&w=1920&q=80') no-repeat center center/cover;
+  animation: zoomMotion 25s ease-in-out infinite alternate;
+  margin: 0; padding: 20px; color: white; overflow-x: hidden; min-height: 100vh; position: relative;
+}
+@keyframes zoomMotion { 0% { background-size: 110%; } 100% { background-size: 120%; } }
+body::before { content: ""; position: absolute; inset: 0; background: linear-gradient(to right, rgba(0,0,0,0.85), rgba(0,0,0,0.6)); z-index: 0; }
+* { position: relative; z-index: 1; }
+h1 { text-align:center; color:#FFD700; text-shadow:0 0 15px rgba(255,215,0,0.6); font-size:2.2rem; margin-bottom:25px; }
+.container { width:90%; margin:auto; background:rgba(255,255,255,0.08); border-radius:15px; padding:20px; box-shadow:0 8px 25px rgba(0,0,0,0.7); backdrop-filter: blur(12px); }
+table { width:100%; border-collapse:collapse; margin-top:15px; border-radius:10px; overflow:hidden; }
+th, td { padding:14px; text-align:center; border-bottom:1px solid rgba(255,255,255,0.2); }
+th { background: linear-gradient(90deg, #FFD700, #e1b12c); color:#111; font-weight:bold; }
+tr:hover { background: rgba(255,255,255,0.1); transition:0.3s; }
+.btn { padding:8px 15px; border:none; border-radius:6px; font-weight:600; cursor:pointer; transition:0.2s; }
+.cancel-btn { background:#e74c3c; color:white; }
+.cancel-btn:hover { background:#c0392b; transform:scale(1.05); }
+.confirm-btn { background:#2ecc71; color:white; }
+.confirm-btn:hover { background:#27ae60; transform:scale(1.05); }
+footer { text-align:center; color:#aaa; margin-top:25px; font-size:14px; }
+.filter-section { text-align:right; margin-bottom:10px; }
+select { background: rgba(255,255,255,0.1); color:white; padding:8px 12px; border:1px solid #FFD700; border-radius:8px; font-weight:500; cursor:pointer; }
+option { color:black; }
+</style>
+</head>
+<body>
+
+<h1>🚘 Manage All Bookings</h1>
+
+<div class="container">
+  <div class="filter-section">
+    <label for="monthSelect">📅 Select Month:</label>
+    <select id="monthSelect" onchange="loadManageBookings(this.value)">
+      <option value="All">All</option>
+      <option>January</option>
+      <option>February</option>
+      <option>March</option>
+      <option>April</option>
+      <option>May</option>
+      <option>June</option>
+      <option>July</option>
+      <option>August</option>
+      <option>September</option>
+      <option>October</option>
+      <option>November</option>
+      <option>December</option>
+    </select>
+  </div>
+
+  <table id="manageTable">
+    <tr>
+      <th>Booking ID</th>
+      <th>Customer</th>
+      <th>Car</th>
+      <th>Start Date</th>
+      <th>Days</th>
+      <th>Total</th>
+      <th>Status</th>
+      <th>Action</th>
+    </tr>
+  </table>
+</div>
+
+<footer>Car Rental Admin Panel © ADM 2025</footer>
+
+<script>
+let currentMonth = "All";
+
+function loadManageBookings(selectedMonth = "All") {
+  const table = document.getElementById("manageTable");
+  let bookings = JSON.parse(localStorage.getItem("bookings")) || [];
+
+  // Reset table headers
+  table.innerHTML = `
+    <tr>
+      <th>Booking ID</th>
+      <th>Customer</th>
+      <th>Car</th>
+      <th>Start Date</th>
+      <th>Days</th>
+      <th>Total</th>
+      <th>Status</th>
+      <th>Action</th>
+    </tr>`;
+
+  // Filter by month if not "All"
+  if (selectedMonth !== "All") {
+    bookings = bookings.filter(b => b.month === selectedMonth);
+  }
+
+  if (bookings.length === 0) {
+    const row = table.insertRow();
+    const cell = row.insertCell(0);
+    cell.colSpan = 8;
+    cell.innerText = "No bookings available for this month.";
+    cell.style.color = "#ccc";
+    return;
+  }
+
+  // Populate table
+  bookings.forEach(b => {
+    const row = table.insertRow();
+    row.insertCell(0).innerText = b.bookingId;
+    row.insertCell(1).innerText = b.customer;
+    row.insertCell(2).innerText = b.car;
+    row.insertCell(3).innerText = b.startDate || "-";
+    row.insertCell(4).innerText = b.days + " days";
+    row.insertCell(5).innerText = "₹" + b.total;
+    row.insertCell(6).innerText = b.status;
+
+    const actionCell = row.insertCell(7);
+    if (b.status === "Confirmed") {
+      actionCell.innerHTML = `<button class='btn cancel-btn' onclick="changeStatus('${b.bookingId}','Cancelled')">Cancel</button>`;
+    } else if (b.status === "Cancelled") {
+      actionCell.innerHTML = `<button class='btn confirm-btn' onclick="changeStatus('${b.bookingId}','Confirmed')">Reconfirm</button>`;
+    } else {
+      actionCell.innerText = "-";
+    }
+  });
+}
+
+function changeStatus(id, newStatus) {
+  let bookings = JSON.parse(localStorage.getItem("bookings")) || [];
+  bookings = bookings.map(b => {
+    if (b.bookingId === id) b.status = newStatus;
+    return b;
+  });
+  localStorage.setItem("bookings", JSON.stringify(bookings));
+  alert(`✅ Booking ${id} status updated to ${newStatus}!`);
+  loadManageBookings(currentMonth);
+}
+
+window.onload = () => loadManageBookings();
+</script>
+</body>
+</html>
