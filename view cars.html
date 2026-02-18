@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Available Cars</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: url('https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1470&q=80') no-repeat center center/cover;
+  background-size: cover;
+  margin:0; padding:20px; color:white;
+}
+h2 {
+  text-align:center;
+  color:#FFD700;
+  margin-bottom:20px;
+  text-shadow:2px 2px 5px black;
+}
+table {
+  width:90%;
+  margin:0 auto;
+  border-collapse:collapse;
+  background:rgba(0,0,0,0.6);
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 5px 15px rgba(0,0,0,0.5);
+}
+th, td {
+  border:1px solid #ddd;
+  padding:12px;
+  text-align:center;
+  color:white;
+}
+th {
+  background:rgba(255,215,0,0.9);
+  color:black;
+}
+tr:hover {
+  background:rgba(255,255,255,0.1);
+}
+.btn {
+  padding:6px 12px;
+  background:#FFD700;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
+  margin:2px;
+}
+.btn:hover {
+  background:#ffcc00;
+}
+</style>
+</head>
+<body>
+
+<h2>Available Cars</h2>
+
+<table id="carTable">
+  <tr>
+    <th>Image</th>
+    <th>Car Name</th>
+    <th>Model</th>
+    <th>Price/Day</th>
+    <th>Vehicle No</th>
+    <th>Action</th>
+  </tr>
+</table>
+
+<script>
+// Logged in user check
+let user = JSON.parse(localStorage.getItem("loggedInUser"));
+if(!user){
+  alert("Please login first!");
+  window.location.href = "user login.html";
+}
+
+// Load cars from localStorage
+let cars = JSON.parse(localStorage.getItem("cars")) || [];
+
+// If old cars don’t have vehicle numbers, auto-generate them
+function generateVehicleNo(){
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const randomLetter = letters[Math.floor(Math.random()*letters.length)];
+  const randomLetter2 = letters[Math.floor(Math.random()*letters.length)];
+  const stateCode = "TN";
+  const district = Math.floor(Math.random()*99).toString().padStart(2,'0');
+  const number = Math.floor(Math.random()*9999).toString().padStart(4,'0');
+  return `${stateCode}-${district}-${randomLetter}${randomLetter2}-${number}`;
+}
+
+cars.forEach(c => {
+  if(!c.vehicleNo){
+    c.vehicleNo = generateVehicleNo();
+  }
+});
+localStorage.setItem("cars", JSON.stringify(cars));
+
+// Display all cars
+function loadCars(){
+  let table = document.getElementById("carTable");
+  table.innerHTML = `
+  <tr>
+    <th>Image</th>
+    <th>Car Name</th>
+    <th>Model</th>
+    <th>Price/Day</th>
+    <th>Vehicle No</th>
+    <th>Action</th>
+  </tr>`;
+
+  cars.forEach((c,i)=>{
+    let row = table.insertRow();
+    row.insertCell(0).innerHTML = `<img src="${c.image}" width="100" style="border-radius:8px;">`;
+    row.insertCell(1).innerText = c.name;
+    row.insertCell(2).innerText = c.model;
+    row.insertCell(3).innerText = "₹"+c.price;
+    row.insertCell(4).innerText = c.vehicleNo;
+    row.insertCell(5).innerHTML = `<button class="btn" onclick="bookCar(${i})">Book</button>`;
+  });
+}
+
+// Booking logic
+function bookCar(index){
+  let days = prompt("Enter number of days:");
+  days = parseInt(days);
+  if(isNaN(days) || days<=0){
+    alert("Invalid days!");
+    return;
+  }
+
+  let car = cars[index];
+  let total = car.price * days;
+
+  let bookings = JSON.parse(localStorage.getItem("bookings")) || [];
+  let bookingId = "BK" + (bookings.length + 1).toString().padStart(3, '0');
+
+  bookings.push({
+    bookingId,
+    customer: user.username,
+    car: car.name,
+    model: car.model,
+    vehicleNo: car.vehicleNo,
+    days: days,
+    total: total,
+    status: "Confirmed"
+  });
+
+  localStorage.setItem("bookings", JSON.stringify(bookings));
+  alert("Car booked successfully!");
+}
+
+window.onload = loadCars;
+</script>
+
+</body>
+</html>
